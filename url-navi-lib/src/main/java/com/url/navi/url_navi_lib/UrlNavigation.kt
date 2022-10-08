@@ -1,6 +1,7 @@
 package com.url.navi.url_navi_lib
 
 import android.content.Context
+import android.util.Log
 import androidx.core.net.toUri
 import com.appsflyer.AppsFlyerConversionListener
 import com.appsflyer.AppsFlyerLib
@@ -21,6 +22,17 @@ class Destination(private val context: Context) {
     suspend fun takeDestination(): String {
         val gd = takeAdbAsync().await()
         val dl = takeDL()
+        return if (dl != null) {
+            takeResult(dl, null, gd)
+        } else {
+            val af = takeAF()
+            takeResult(null, af, gd)
+        }
+    }
+
+    suspend fun takeMockDl(): String {
+        val gd = takeAdbAsync().await()
+        val dl = "myapp://test1/test2/test3"
         return if (dl != null) {
             takeResult(dl, null, gd)
         } else {
@@ -71,18 +83,21 @@ class Destination(private val context: Context) {
         when {
             af?.get("campaign").toString() == "null" && dl == null -> {
                 OneSignal.sendTag("key2", "organic")
+                Log.d("OneSignal", "organic")
             }
             dl != null -> {
                 OneSignal.sendTag(
                     "key2",
                     dl.replace("myapp://", "").substringBefore("/")
                 )
+                Log.d("OneSignal", "dl")
             }
             af?.get("campaign").toString() != "null" -> {
                 OneSignal.sendTag(
                     "key2",
                     af?.get("campaign").toString().substringBefore("_")
                 )
+                Log.d("OneSignal", "af")
             }
         }
         return "https://richgame.site/abc.php".toUri().buildUpon()
